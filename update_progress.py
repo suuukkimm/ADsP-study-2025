@@ -1,4 +1,4 @@
-import re, sys
+import re
 
 README = "README.md"
 START = "<!-- PROGRESS-START -->"
@@ -7,30 +7,31 @@ END = "<!-- PROGRESS-END -->"
 with open(README, "r", encoding="utf-8") as f:
     content = f.read()
 
-# 체크박스 집계: [ ] / [x] / [X] 만 카운트
+# 체크박스 카운트
 total = len(re.findall(r"\[(?: |x|X)\]", content))
 done = len(re.findall(r"\[(?:x|X)\]", content))
 percent = int(round((done / total) * 100)) if total else 0
 
-# 게이지 바(20칸)
+# 진행률 바 (20칸)
 bar_len = 20
 filled = int(round(bar_len * percent / 100))
 bar = "█" * filled + "░" * (bar_len - filled)
 
 block = f"""{START}
-- ✅ 완료: {done} / {total}
-- 진행률: {percent}%
+- ✅ 완료: {done} / {total}  
+- 진행률: {percent}%  
 
 #### Progress Bar
 `{bar}` {percent}%
 {END}"""
 
-pattern = re.compile(re.escape(START) + r".*?" + re.escape(END), re.S)
-if not pattern.search(content):
-    print("⚠️  PROGRESS 마커가 README에 없습니다. README에 마커 블록을 추가하세요.")
-    sys.exit(0)
+pattern = re.compile(rf"{re.escape(START)}.*?{re.escape(END)}", re.S)
 
-new_content = pattern.sub(block, content)
+# 마커 구간이 있으면 교체, 없으면 그냥 추가
+if pattern.search(content):
+    new_content = pattern.sub(block, content)
+else:
+    new_content = content + "\n\n" + block
 
 if new_content != content:
     with open(README, "w", encoding="utf-8") as f:
