@@ -2,8 +2,7 @@ name: Update Progress
 
 on:
   push:
-    branches:
-      - '**'
+    branches: [main]
   workflow_dispatch: {}
 
 permissions:
