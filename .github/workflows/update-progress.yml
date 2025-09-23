@@ -2,7 +2,7 @@ name: Update Progress
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch: {}
 
 permissions:
@@ -12,23 +12,38 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Show branch & files
+        run: |
+          git branch --show-current
+          ls -la
+
+      - name: Debug markers & checkbox count
+        run: |
+          echo "== Check markers =="
+          grep -n "<!-- PROGRESS-START -->" README.md || true
+          grep -n "<!-- PROGRESS-END -->"   README.md || true
+          echo "== Count checkboxes in README =="
+          grep -o "\[\( \|x\|X\)\]" README.md | wc -l || true
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
-      - name: Update README progress
+      - name: Run updater
         run: python update_progress.py
 
       - name: Commit changes (if any)
         run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet; then
-            git add README.md
+          git add README.md || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
             git commit -m "chore: auto-update progress"
             git push
-          else
-            echo "No changes to commit."
+          fi
